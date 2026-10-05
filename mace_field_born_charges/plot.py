@@ -30,13 +30,20 @@ def main():
     ax_z.set_title("Born effective charges")
 
     ax_eps.scatter(eps_ref, eps, s=18)
-    top = 1.05 * max(eps.max(), eps_ref.max())
-    line = np.array([1, top])
+    low = 0.9 * min(eps.min(), eps_ref.min())
+    top = 1.1 * max(eps.max(), eps_ref.max())
+    line = np.array([low, top])
     ax_eps.plot(line, line, "k-", lw=0.8)
     ax_eps.plot(line, 1.2 * line, "k:", lw=0.8, label="20%")
     ax_eps.plot(line, 0.8 * line, "k:", lw=0.8)
-    ax_eps.set_xlim(1, top)
-    ax_eps.set_ylim(1, top)
+    ax_eps.set_xscale("log")
+    ax_eps.set_yscale("log")
+    ax_eps.set_xlim(low, top)
+    ax_eps.set_ylim(low, top)
+    ticks = [t for t in (1, 2, 3, 5, 10, 20, 30, 50) if low <= t <= top]
+    ax_eps.minorticks_off()
+    ax_eps.set_xticks(ticks, ticks)
+    ax_eps.set_yticks(ticks, ticks)
     ax_eps.set_aspect("equal")
     ax_eps.set_xlabel(r"$\varepsilon_\infty$ from DFPT")
     ax_eps.set_ylabel(r"$\varepsilon_\infty$ from MACE-Field")
@@ -45,9 +52,25 @@ def main():
 
     # label the materials with the largest errors
     for idx in np.argsort(z_mae)[-1:]:
-        ax_z.annotate(rows[idx]["formula"], (z_ref[idx], z_mae[idx]), fontsize=8)
+        ax_z.annotate(
+            rows[idx]["formula"],
+            (z_ref[idx], z_mae[idx]),
+            xytext=(5, 0),
+            textcoords="offset points",
+            va="center",
+            fontsize=8,
+        )
     for idx in np.argsort(eps_err)[-2:]:
-        ax_eps.annotate(rows[idx]["formula"], (eps_ref[idx], eps[idx]), fontsize=8)
+        ax_eps.annotate(
+            rows[idx]["formula"],
+            (eps_ref[idx], eps[idx]),
+            xytext=(0, -6),
+            textcoords="offset points",
+            # left of the point in the upper half of the range, else right of it
+            ha="right" if eps_ref[idx] > np.sqrt(low * top) else "left",
+            va="top",
+            fontsize=8,
+        )
 
     fig.tight_layout()
     (HERE / "figures").mkdir(exist_ok=True)
